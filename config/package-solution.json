@@ -1,0 +1,40 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/package-solution.schema.json",
+  "solution": {
+    "name": "display-elements-client-side-solution",
+    "id": "f0314f2c-fc67-49c9-9f96-da0bff771df4",
+    "version": "1.0.0.0",
+    "includeClientSideAssets": true,
+    "skipFeatureDeployment": true,
+    "isDomainIsolated": false,
+    "developer": {
+      "name": "",
+      "websiteUrl": "",
+      "privacyUrl": "",
+      "termsOfUseUrl": "",
+      "mpnId": "Undefined-1.18.2"
+    },
+    "metadata": {
+      "shortDescription": {
+        "default": "display-elements description"
+      },
+      "longDescription": {
+        "default": "display-elements description"
+      },
+      "screenshotPaths": [],
+      "videoUrl": "",
+      "categories": []
+    },
+    "features": [
+      {
+        "title": "display-elements Feature",
+        "description": "The feature that activates elements of the display-elements solution.",
+        "id": "5f11a35c-114b-48da-a30f-4cb28d05c23b",
+        "version": "1.0.0.0"
+      }
+    ]
+  },
+  "paths": {
+    "zippedPackage": "solution/display-elements.sppkg"
+  }
+}
