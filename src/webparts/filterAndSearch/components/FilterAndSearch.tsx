@@ -157,6 +157,7 @@ export default class FilterAndSearch extends React.Component<
                   </span>
                 </div> */}
 
+                  
                 <div className={styles.button}>
                   <span
                     className={styles.fieldLabel}
@@ -197,6 +198,7 @@ export default class FilterAndSearch extends React.Component<
     }
   };
 
+  //@ts-ignore
   private investInItem = async (id: string) => {
     try {
       // Convert the id to a number
@@ -232,6 +234,41 @@ export default class FilterAndSearch extends React.Component<
 
   // Working Add to Shortlist
 
+  // // @ts-ignore
+  // private addToShortlist = async (
+  //   id: string,
+  //   company: string,
+  //   date: string,
+  //   MyItemUniq: string
+  // ) => {
+  //   try {
+  //     const user = await this._sp.web.currentUser();
+  //     const loginName = user.Title;
+
+  //     const emailId = user.Email;
+
+  //     const date = this.getCurrentDate();
+
+  //     const MyItemUniq = `${loginName}${date}${id}${company}`;
+
+  //     await this._sp.web.lists.getByTitle("Shortlisted").items.add({
+  //       Title: `Shortlisted ${id}`,
+  //       Company: company,
+  //       Date: date,
+  //       MyItemUniq: MyItemUniq,
+  //       username: user.Title,
+  //       EmailID: emailId,
+  //     });
+
+  //     alert("company Shortlisted!");
+  //   } catch (error) {
+  //     console.error("Error shortlisting company:", error);
+  //     alert("An error occurred while shortlisting the company.");
+  //   }
+  // };
+
+  // Working Add to Shortlist
+
   // @ts-ignore
   private addToShortlist = async (
     id: string,
@@ -248,14 +285,23 @@ export default class FilterAndSearch extends React.Component<
       const date = this.getCurrentDate();
 
       const MyItemUniq = `${loginName}${date}${id}${company}`;
+// Check if the Company is already shortlisted
+const isShortlisted = await this.checkIfShortlisted(loginName, company);
+if (isShortlisted) {
+alert(`Company ${company} is already shortlisted.`);
+return;
+}
 
       await this._sp.web.lists.getByTitle("Shortlisted").items.add({
-        Title: `Shortlisted ${id}`,
-        Company: company,
-        Date: date,
-        MyItemUniq: MyItemUniq,
-        username: user.Title,
-        EmailID: emailId,
+        Title: `${loginName}${company}`,
+  Company: company,
+  MyItemUniq: MyItemUniq,
+  username: loginName,
+  Date: date,
+  FormInfo:'No',
+// ApplicationDate: applicationDate, // Add ApplicationDate to the Shortlisted list
+// MyAdmissionSafeDate: MyAdmissionSafeDate, // Add MyAdmissionSafeDate to the Shortlisted list
+EmailID : emailId,
       });
 
       alert("company Shortlisted!");
@@ -265,7 +311,15 @@ export default class FilterAndSearch extends React.Component<
     }
   };
 
-  // private getAllItems = async () => {
+  private checkIfShortlisted = async (username: string, Company: string): Promise<boolean> => {
+    const result = await this._sp.web.lists.getByTitle("Shortlisted")
+    .items.filter(`username eq '${username}' and Company eq '${Company}'`)
+    .select("ID")
+    ();
+    
+    return result.length > 0;
+    };
+      // private getAllItems = async () => {
   //   try {
   //     const { selectedCountry, selectedIndustry, selectedCompany } = this.state;
 
@@ -741,6 +795,104 @@ export default class FilterAndSearch extends React.Component<
     }
   };
 
+
+
+  // Tiles for shortlisted
+  private getShortlistedItems = async () => {
+    try {
+      // Fetch items from the Shortlisted list
+      const items: any[] = await this._sp.web.lists
+        .getByTitle("Shortlisted")
+        .items.select("ID", "Title", "Company", "username", "EmailID")(); // Include the "ID" field
+
+      // Get the current user's title (assuming you have access to it)
+      const user = await this._sp.web.currentUser();
+      const currentUserTitle = user.Title; // Replace with the actual current user's title
+
+      // Generate HTML for the tiles
+      let html = `
+  <style>
+  .tile {
+    width: 200px;
+    height: 150px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 10px;
+    margin: 5px;
+    display: inline-block;
+    vertical-align: top;
+    text-align: center;
+  }
+
+  .tile-title {
+    font-weight: bold;
+  }
+
+  .tile-company {
+    margin-top: 5px;
+  }
+
+  .tile-buttons {
+    margin-top: 10px;
+  }
+  </style>`;
+
+      items.forEach((item) => {
+        // Check if the item's Username matches the current user's title
+        if (item.username === currentUserTitle) {
+          html += `
+  <div class="tile">
+    <div class="tile-title">${item.Title}</div>
+    <div class="tile-company">${item.Company}</div>
+    <div class="tile-buttons">
+      <button class="delete-button" data-id="${item.ID}">Delete</button>
+      <button class="apply-button" data-id="${item.ID}">Ready To Invest</button>
+    </div>
+  </div>`;
+        }
+      });
+
+      // Display the tiles inside the specified <div>
+      const allItemsElement = document.getElementById("allItems");
+      if (allItemsElement) {
+        allItemsElement.innerHTML = html;
+
+        // Add event listeners to delete and apply buttons
+        document.querySelectorAll(".delete-button").forEach((button) => {
+          button.addEventListener("click", async (event) => {
+            const target = event.target as HTMLElement;
+            const id = target.dataset.id;
+            if (id) {
+              await this.deleteItemFromShortlist(id);
+              alert("Item Deleted!");
+            } else {
+              console.error("ID is missing or undefined from button dataset.");
+            }
+          });
+        });
+
+        document.querySelectorAll(".apply-button").forEach((button) => {
+          button.addEventListener("click", () => {
+            console.log("Button Clicked");
+            // window.open(
+            //   "https://growsecureholding.sharepoint.com/:l:/s/GSHPortfolio/FDW1wx3cubVHsXq0SPirXGEBmTpvRald8hnRJuNUgglnww?nav=ODU4OGM4ZjctZTdlYS00YjMwLWE3ZDktMzA2MWQ4NmM1MDA0"
+            // );
+            window.open(
+              "https://forms.office.com/r/E5cKSsh6vY"
+            );
+            console.log("Button Clicked2");
+          });
+        });
+      } else {
+        console.error("Element with id 'allItems' not found.");
+      }
+    } catch (error) {
+      console.error("Error fetching shortlisted items:", error);
+      // Optionally, display an error message or handle the error in another way
+    }
+  };
+
+  
   //   private getShortlistedItems = async () => {
   //     try {
   //       // Fetch items from the Shortlisted list
@@ -817,115 +969,119 @@ export default class FilterAndSearch extends React.Component<
   //       // Optionally, display an error message or handle the error in another way
   //     }
   //   };
-  private getShortlistedItems = async () => {
-    try {
-      // Fetch items from the Shortlisted list
-      const items: any[] = await this._sp.web.lists
-        .getByTitle("Shortlisted")
-        .items.select("ID", "Title", "Company", "username", "EmailID")(); // Include the "ID" field
+  
+  // Working code
+//   private getShortlistedItems = async () => {
+//     try {
+//       // Fetch items from the Shortlisted list
+//       const items: any[] = await this._sp.web.lists
+//         .getByTitle("Shortlisted")
+//         .items.select("ID", "Title", "Company", "username", "EmailID")(); // Include the "ID" field
 
-      // Get the current user's title (assuming you have access to it)
-      const user = await this._sp.web.currentUser();
-      const currentUserTitle = user.Title; // Replace with the actual current user's title
+//       // Get the current user's title (assuming you have access to it)
+//       const user = await this._sp.web.currentUser();
+//       const currentUserTitle = user.Title; // Replace with the actual current user's title
 
-      // Generate HTML for the table
-      let html = `
-<style>
-  table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-  th, td {
-    border: 1px solid #ddd;
-    padding: 8px;
-    text-align: left;
-  }
-  th {
-    background-color: #0078d4;
-    color: white;
-  }
-  tr:nth-child(even) {
-    background-color: #f2f2f2;
-  }
-  .delete-button, .apply-button {
-    margin-right: 5px;
-    padding: 5px 10px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-  }
-  .delete-button {
-    background-color: #f44336;
-    color: white;
-  }
-  .apply-button {
-    background-color: #0078d4;
-    color: white;
-  }
-</style>
-<table>
-<tr>
-  <th>Title</th>
-  <th>Company</th>
-  <th>Action</th>
-</tr>`;
+//       // Generate HTML for the table
+//       let html = `
+// <style>
+//   table {
+//     width: 100%;
+//     border-collapse: collapse;
+//   }
+//   th, td {
+//     border: 1px solid #ddd;
+//     padding: 8px;
+//     text-align: left;
+//   }
+//   th {
+//     background-color: #0078d4;
+//     color: white;
+//   }
+//   tr:nth-child(even) {
+//     background-color: #f2f2f2;
+//   }
+//   .delete-button, .apply-button {
+//     margin-right: 5px;
+//     padding: 5px 10px;
+//     border: none;
+//     border-radius: 5px;
+//     cursor: pointer;
+//   }
+//   .delete-button {
+//     background-color: #f44336;
+//     color: white;
+//   }
+//   .apply-button {
+//     background-color: #0078d4;
+//     color: white;
+//   }
+// </style>
+// <table>
+// <tr>
+//   <th>Title</th>
+//   <th>Company</th>
+//   <th>Action</th>
+// </tr>`;
 
-      items.forEach((item) => {
-        // Check if the item's Username matches the current user's title
-        if (item.username === currentUserTitle) {
-          html += `
-<tr>
-  <td>${item.Title}</td>
-  <td>${item.Company}</td>
-  <td>
-    <button class="delete-button" data-id="${item.ID}">Delete</button>
-    <button class="apply-button" data-id="${item.ID}">Apply</button>
-  </td>
-</tr>`;
-        }
-      });
+//       items.forEach((item) => {
+//         // Check if the item's Username matches the current user's title
+//         if (item.username === currentUserTitle) {
+//           html += `
+// <tr>
+//   <td>${item.Title}</td>
+//   <td>${item.Company}</td>
+//   <td>
+//     <button class="delete-button" data-id="${item.ID}">Delete</button>
+//     <button class="apply-button" data-id="${item.ID}">Apply</button>
+//   </td>
+// </tr>`;
+//         }
+//       });
 
-      html += `</table>`;
+//       html += `</table>`;
 
-      // Display the table inside the specified <div>
-      const allItemsElement = document.getElementById("allItems");
-      if (allItemsElement) {
-        allItemsElement.innerHTML = html;
+//       // Display the table inside the specified <div>
+//       const allItemsElement = document.getElementById("allItems");
+//       if (allItemsElement) {
+//         allItemsElement.innerHTML = html;
 
-        // Add event listeners to delete and apply buttons
-        document.querySelectorAll(".delete-button").forEach((button) => {
-          button.addEventListener("click", async (event) => {
-            const target = event.target as HTMLElement;
-            const id = target.dataset.id;
-            if (id) {
-              await this.deleteItemFromShortlist(id);
-              alert("Item Deleted!");
-            } else {
-              console.error("ID is missing or undefined from button dataset.");
-            }
-          });
-        });
+//         // Add event listeners to delete and apply buttons
+//         document.querySelectorAll(".delete-button").forEach((button) => {
+//           button.addEventListener("click", async (event) => {
+//             const target = event.target as HTMLElement;
+//             const id = target.dataset.id;
+//             if (id) {
+//               await this.deleteItemFromShortlist(id);
+//               alert("Item Deleted!");
+//             } else {
+//               console.error("ID is missing or undefined from button dataset.");
+//             }
+//           });
+//         });
 
-        document.querySelectorAll(".apply-button").forEach((button) => {
-          button.addEventListener("click", async (event) => {
-            const target = event.target as HTMLElement;
-            const id = target.dataset.id;
-            if (id) {
-              await this.investInItem(id);
-              alert("Item Applied!");
-            } else {
-              console.error("ID is missing or undefined from button dataset.");
-            }
-          });
-        });
-      } else {
-        console.error("Element with id 'allItems' not found.");
-      }
-    } catch (error) {
-      console.error("Error fetching shortlisted items:", error);
-      // Optionally, display an error message or handle the error in another way
-    }
-  };
+//         document.querySelectorAll(".apply-button").forEach((button) => {
+//           button.addEventListener("click", async (event) => {
+//             const target = event.target as HTMLElement;
+//             const id = target.dataset.id;
+//             if (id) {
+//               await this.investInItem(id);
+//               alert("Item Applied!");
+//             } else {
+//               console.error("ID is missing or undefined from button dataset.");
+//             }
+//           });
+//         });
+//       } else {
+//         console.error("Element with id 'allItems' not found.");
+//       }
+//     } catch (error) {
+//       console.error("Error fetching shortlisted items:", error);
+//       // Optionally, display an error message or handle the error in another way
+//     }
+//   };
+
+
   // private handleCountryChange = (
   //   event: React.ChangeEvent<HTMLSelectElement>
   // ) => {

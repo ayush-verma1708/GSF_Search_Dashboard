@@ -242,6 +242,40 @@ export default class DisplayElements extends React.Component<
 
   // Working Add to Shortlist
 
+  // // @ts-ignore
+  // private addToShortlist = async (
+  //   id: string,
+  //   company: string,
+  //   date: string,
+  //   MyItemUniq: string
+  // ) => {
+  //   try {
+  //     const user = await this._sp.web.currentUser();
+  //     const loginName = user.Title;
+
+  //     const emailId = user.Email;
+
+  //     const date = this.getCurrentDate();
+
+  //     const MyItemUniq = `${loginName}${date}${id}${company}`;
+
+  //     await this._sp.web.lists.getByTitle("Shortlisted").items.add({
+  //       Title: `Shortlisted ${id}`,
+  //       Company: company,
+  //       Date: date,
+  //       MyItemUniq: MyItemUniq,
+  //       username: user.Title,
+  //       EmailID: emailId,
+  //     });
+
+  //     alert("company Shortlisted!");
+  //   } catch (error) {
+  //     console.error("Error shortlisting company:", error);
+  //     alert("An error occurred while shortlisting the company.");
+  //   }
+  // };
+  // Working Add to Shortlist
+
   // @ts-ignore
   private addToShortlist = async (
     id: string,
@@ -258,14 +292,23 @@ export default class DisplayElements extends React.Component<
       const date = this.getCurrentDate();
 
       const MyItemUniq = `${loginName}${date}${id}${company}`;
+// Check if the Company is already shortlisted
+const isShortlisted = await this.checkIfShortlisted(loginName, company);
+if (isShortlisted) {
+alert(`Company ${company} is already shortlisted.`);
+return;
+}
 
       await this._sp.web.lists.getByTitle("Shortlisted").items.add({
-        Title: `Shortlisted ${id}`,
-        Company: company,
-        Date: date,
-        MyItemUniq: MyItemUniq,
-        username: user.Title,
-        EmailID: emailId,
+        Title: `${loginName}${company}`,
+  Company: company,
+  MyItemUniq: MyItemUniq,
+  username: loginName,
+  Date: date,
+  FormInfo:'No',
+// ApplicationDate: applicationDate, // Add ApplicationDate to the Shortlisted list
+// MyAdmissionSafeDate: MyAdmissionSafeDate, // Add MyAdmissionSafeDate to the Shortlisted list
+EmailID : emailId,
       });
 
       alert("company Shortlisted!");
@@ -275,6 +318,14 @@ export default class DisplayElements extends React.Component<
     }
   };
 
+  private checkIfShortlisted = async (username: string, Company: string): Promise<boolean> => {
+    const result = await this._sp.web.lists.getByTitle("Shortlisted")
+    .items.filter(`username eq '${username}' and Company eq '${Company}'`)
+    .select("ID")
+    ();
+    
+    return result.length > 0;
+    };
   private getAllItems = async () => {
     try {
       const { selectedCountry, selectedIndustry, selectedCompany } = this.state;
@@ -343,25 +394,21 @@ export default class DisplayElements extends React.Component<
       .tile a:hover {
         color: #666; /* Change this to your preferred hover color */
       }
-      .tile-title, .tile-country, .tile-industry, .tile-company, .tile-previous-funding {
-        font-size: 1em;
-        color: #333; /* Change this to your preferred color */
-      }
-      .shortlist-button, .company-page-button, .company-website-button {
-        background-color: #0078d4;
-        color: #fff;
-        border: none;
-        border-radius: 5px;
-        padding: 5px 10px; /* Adjust padding to reduce the size of the button */
-        font-size: 0.8em; /* Adjust font size to make text smaller */
-        cursor: pointer;
-        margin-top: 10px;
-        transition: background-color 0.3s ease-in-out;
-      }
+      .tile-title{
+        margin-top: 60px;
+  font-weight: 500;
+  font-size: 18px;
+  color: var(--main-color);
+      } 
       
-      .shortlist-button:hover, .company-page-button:hover, .company-website-button:hover {
-        background-color: #005a9e;
+      .tile-country, .tile-industry, .tile-company, .tile-previous-funding {
+        margin-top: 10px;
+  font-weight: 400;
+  font-size: 15px;
+  color: var(--submain-color);
       }
+
+     
       
       .tile-content {
         display: flex;
@@ -389,14 +436,17 @@ export default class DisplayElements extends React.Component<
         box-sizing: border-box;
       }
       .tile {
-        position: relative; 
-        border: 1px solid #ddd;
-        border-radius: 10px;
-        padding: 15px;
-        box-sizing: border-box;
-        text-align: center;
-        transition: transform 0.3s ease-in-out;
-        width: 180px; /* Set a fixed width */
+        --main-color: #000;
+        --submain-color: #78858F;
+        --bg-color: #fff;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        position: relative;
+        width: 300px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        border-radius: 20px;
+        background: var(--bg-color);
         height: auto; /* Let the height adjust automatically */
       }
       .tile:hover {
@@ -418,19 +468,38 @@ export default class DisplayElements extends React.Component<
         margin-top: 10px;
         font-size: 0.9em;
       }
+      
+      
+      .shortlist-button, .company-page-button, .company-website-button {
+        margin-top: 15px;
+        width: 80px;
+        height: 40px;
+        border: 2px solid var(--main-color);
+        border-radius: 4px;
+        font-weight: 700;
+        font-size: 11px;
+        color: var(--main-color);
+        background: var(--bg-color);
+        text-transform: uppercase;
+        transition: all 0.3s;
+      }
+      
+      .shortlist-button:hover, .company-page-button:hover, .company-website-button:hover {
+        background: var(--main-color);
+        color: var(--bg-color);
+      }
+
       .shortlist-button {
-        background-color: #0078d4;
-        color: #fff;
-        border: none;
-        border-radius: 5px;
-        padding: 10px 20px;
-        cursor: pointer;
-        margin-top: 10px;
-        transition: background-color 0.3s ease-in-out;
+        background: var(--main-color);
+  color: var(--bg-color);
       }
       .shortlist-button:hover {
-        background-color: #005a9e;
+        background: #fff;
+  color: var(--main-color);
       }
+
+
+
       .button-container {
         display: flex;
         justify-content: space-between; /* Adjusts the space between the buttons */
@@ -459,10 +528,9 @@ export default class DisplayElements extends React.Component<
                 <div class="tile-image-container">
                   <img src="${imageUrl}" alt="Thumbnail" class="tile-image" />
                 </div>
-                <div class="tile-title">${item.Title}</div>
+                 <div class="tile-company">Company: ${company}</div>
                 <div class="tile-country">Country: ${country}</div>
                 <div class="tile-industry">Industry: ${industry}</div>
-                <div class="tile-company">Company: ${company}</div>
                 <div class="tile-previous-funding">Previous Funding: ${previousFunding}</div>
              
             </div>
@@ -645,114 +713,6 @@ export default class DisplayElements extends React.Component<
   //   };
 
   // Working code
-  private getShortlistedItems = async () => {
-    try {
-      // Fetch items from the Shortlisted list
-      const items: any[] = await this._sp.web.lists
-        .getByTitle("Shortlisted")
-        .items.select("ID", "Title", "Company", "username", "EmailID")(); // Include the "ID" field
-
-      // Get the current user's title (assuming you have access to it)
-      const user = await this._sp.web.currentUser();
-      const currentUserTitle = user.Title; // Replace with the actual current user's title
-
-      // Generate HTML for the table
-      let html = `
-  <style>
-  table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-  th, td {
-    border: 1px solid #ddd;
-    padding: 8px;
-    text-align: left;
-  }
-  th {
-    background-color: #0078d4;
-    color: white;
-  }
-  tr:nth-child(even) {
-    background-color: #f2f2f2;
-  }
-  .delete-button, .apply-button {
-    margin-right: 5px;
-    padding: 5px 10px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-  }
-  .delete-button {
-    background-color: #f44336;
-    color: white;
-  }
-  .apply-button {
-    background-color: #0078d4;
-    color: white;
-  }
-  </style>
-  <table>
-  <tr>
-  <th>Title</th>
-  <th>Company</th>
-  <th>Action</th>
-  </tr>`;
-
-      items.forEach((item) => {
-        // Check if the item's Username matches the current user's title
-        if (item.username === currentUserTitle) {
-          html += `
-  <tr>
-  <td>${item.Title}</td>
-  <td>${item.Company}</td>
-  <td>
-    <button class="delete-button" data-id="${item.ID}">Delete</button>
-    <button class="apply-button" data-id="${item.ID}">Ready To Invest</button>
-  </td>
-  </tr>`;
-        }
-      });
-
-      html += `</table>`;
-
-      // Display the table inside the specified <div>
-      const allItemsElement = document.getElementById("allItems");
-      if (allItemsElement) {
-        allItemsElement.innerHTML = html;
-
-        // Add event listeners to delete and apply buttons
-        document.querySelectorAll(".delete-button").forEach((button) => {
-          button.addEventListener("click", async (event) => {
-            const target = event.target as HTMLElement;
-            const id = target.dataset.id;
-            if (id) {
-              await this.deleteItemFromShortlist(id);
-              alert("Item Deleted!");
-            } else {
-              console.error("ID is missing or undefined from button dataset.");
-            }
-          });
-        });
-
-        document.querySelectorAll(".apply-button").forEach((button) => {
-          button.addEventListener("click", () => {
-            console.log("Button Clicked");
-            window.open(
-              "https://growsecureholding.sharepoint.com/:l:/s/GSHPortfolio/FDW1wx3cubVHsXq0SPirXGEBmTpvRald8hnRJuNUgglnww?nav=ODU4OGM4ZjctZTdlYS00YjMwLWE3ZDktMzA2MWQ4NmM1MDA0"
-            );
-            console.log("Button Clicked2");
-          });
-        });
-      } else {
-        console.error("Element with id 'allItems' not found.");
-      }
-    } catch (error) {
-      console.error("Error fetching shortlisted items:", error);
-      // Optionally, display an error message or handle the error in another way
-    }
-  };
-
-  // Tiles for shortlisted
   // private getShortlistedItems = async () => {
   //   try {
   //     // Fetch items from the Shortlisted list
@@ -764,50 +724,66 @@ export default class DisplayElements extends React.Component<
   //     const user = await this._sp.web.currentUser();
   //     const currentUserTitle = user.Title; // Replace with the actual current user's title
 
-  //     // Generate HTML for the tiles
+  //     // Generate HTML for the table
   //     let html = `
   // <style>
-  // .tile {
-  //   width: 200px;
-  //   height: 150px;
+  // table {
+  //   width: 100%;
+  //   border-collapse: collapse;
+  // }
+  // th, td {
   //   border: 1px solid #ddd;
+  //   padding: 8px;
+  //   text-align: left;
+  // }
+  // th {
+  //   background-color: #0078d4;
+  //   color: white;
+  // }
+  // tr:nth-child(even) {
+  //   background-color: #f2f2f2;
+  // }
+  // .delete-button, .apply-button {
+  //   margin-right: 5px;
+  //   padding: 5px 10px;
+  //   border: none;
   //   border-radius: 5px;
-  //   padding: 10px;
-  //   margin: 5px;
-  //   display: inline-block;
-  //   vertical-align: top;
-  //   text-align: center;
+  //   cursor: pointer;
   // }
-
-  // .tile-title {
-  //   font-weight: bold;
+  // .delete-button {
+  //   background-color: #f44336;
+  //   color: white;
   // }
-
-  // .tile-company {
-  //   margin-top: 5px;
+  // .apply-button {
+  //   background-color: #0078d4;
+  //   color: white;
   // }
-
-  // .tile-buttons {
-  //   margin-top: 10px;
-  // }
-  // </style>`;
+  // </style>
+  // <table>
+  // <tr>
+  // <th>Title</th>
+  // <th>Company</th>
+  // <th>Action</th>
+  // </tr>`;
 
   //     items.forEach((item) => {
   //       // Check if the item's Username matches the current user's title
   //       if (item.username === currentUserTitle) {
   //         html += `
-  // <div class="tile">
-  //   <div class="tile-title">${item.Title}</div>
-  //   <div class="tile-company">${item.Company}</div>
-  //   <div class="tile-buttons">
-  //     <button class="delete-button" data-id="${item.ID}">Delete</button>
-  //     <button class="apply-button" data-id="${item.ID}">Ready To Invest</button>
-  //   </div>
-  // </div>`;
+  // <tr>
+  // <td>${item.Title}</td>
+  // <td>${item.Company}</td>
+  // <td>
+  //   <button class="delete-button" data-id="${item.ID}">Delete</button>
+  //   <button class="apply-button" data-id="${item.ID}">Ready To Invest</button>
+  // </td>
+  // </tr>`;
   //       }
   //     });
 
-  //     // Display the tiles inside the specified <div>
+  //     html += `</table>`;
+
+  //     // Display the table inside the specified <div>
   //     const allItemsElement = document.getElementById("allItems");
   //     if (allItemsElement) {
   //       allItemsElement.innerHTML = html;
@@ -843,6 +819,101 @@ export default class DisplayElements extends React.Component<
   //     // Optionally, display an error message or handle the error in another way
   //   }
   // };
+
+  // Tiles for shortlisted
+  private getShortlistedItems = async () => {
+    try {
+      // Fetch items from the Shortlisted list
+      const items: any[] = await this._sp.web.lists
+        .getByTitle("Shortlisted")
+        .items.select("ID", "Title", "Company", "username", "EmailID")(); // Include the "ID" field
+
+      // Get the current user's title (assuming you have access to it)
+      const user = await this._sp.web.currentUser();
+      const currentUserTitle = user.Title; // Replace with the actual current user's title
+
+      // Generate HTML for the tiles
+      let html = `
+  <style>
+  .tile {
+    width: 200px;
+    height: 150px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 10px;
+    margin: 5px;
+    display: inline-block;
+    vertical-align: top;
+    text-align: center;
+  }
+
+  .tile-title {
+    font-weight: bold;
+  }
+
+  .tile-company {
+    margin-top: 5px;
+  }
+
+  .tile-buttons {
+    margin-top: 10px;
+  }
+  </style>`;
+
+      items.forEach((item) => {
+        // Check if the item's Username matches the current user's title
+        if (item.username === currentUserTitle) {
+          html += `
+  <div class="tile">
+    <div class="tile-title">${item.Title}</div>
+    <div class="tile-company">${item.Company}</div>
+    <div class="tile-buttons">
+      <button class="delete-button" data-id="${item.ID}">Delete</button>
+      <button class="apply-button" data-id="${item.ID}">Ready To Invest</button>
+    </div>
+  </div>`;
+        }
+      });
+
+      // Display the tiles inside the specified <div>
+      const allItemsElement = document.getElementById("allItems");
+      if (allItemsElement) {
+        allItemsElement.innerHTML = html;
+
+        // Add event listeners to delete and apply buttons
+        document.querySelectorAll(".delete-button").forEach((button) => {
+          button.addEventListener("click", async (event) => {
+            const target = event.target as HTMLElement;
+            const id = target.dataset.id;
+            if (id) {
+              await this.deleteItemFromShortlist(id);
+              alert("Item Deleted!");
+            } else {
+              console.error("ID is missing or undefined from button dataset.");
+            }
+          });
+        });
+
+        document.querySelectorAll(".apply-button").forEach((button) => {
+          button.addEventListener("click", () => {
+            console.log("Button Clicked");
+            // window.open(
+            //   "https://growsecureholding.sharepoint.com/:l:/s/GSHPortfolio/FDW1wx3cubVHsXq0SPirXGEBmTpvRald8hnRJuNUgglnww?nav=ODU4OGM4ZjctZTdlYS00YjMwLWE3ZDktMzA2MWQ4NmM1MDA0"
+            // );
+            window.open(
+              "https://forms.office.com/r/E5cKSsh6vY"
+            );
+            console.log("Button Clicked2");
+          });
+        });
+      } else {
+        console.error("Element with id 'allItems' not found.");
+      }
+    } catch (error) {
+      console.error("Error fetching shortlisted items:", error);
+      // Optionally, display an error message or handle the error in another way
+    }
+  };
 
   //Info about companies in tiles
   // private getShortlistedItems = async () => {
